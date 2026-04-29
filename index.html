@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freight Calculator PRO</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.6.0/jspdf.plugin.autotable.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --steel:#1a2332;--steel-mid:#243147;--steel-light:#2e3f5a;
+  --accent:#f4a012;--surface:#1e2d42;--border:rgba(138,155,176,0.25);
+  --text:#e8edf4;--muted:#7a8fa8;--green:#22c55e;--red:#ef4444;
+}
+html,body{font-family:'Barlow',sans-serif;background:var(--steel);color:var(--text);min-height:100vh;font-size:14px;}
+.train-header{background:var(--steel-mid);border-bottom:3px solid var(--accent);}
+.header-inner{display:flex;align-items:center;gap:16px;padding:18px 24px 22px;}
+.header-title{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;color:var(--accent);letter-spacing:2px;text-transform:uppercase;}
+.header-sub{font-size:11px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
+.rail-track{height:8px;background:var(--steel-mid);border-top:2px solid var(--accent);display:flex;align-items:center;padding:0 24px;gap:20px;}
+.rail-tie{width:12px;height:4px;background:var(--muted);border-radius:2px;}
+.tabs-bar{background:var(--steel-mid);padding:0 24px;border-bottom:1px solid var(--border);}
+.tabs{display:flex;}
+.tab{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:11px 18px;border-bottom:2px solid transparent;cursor:pointer;color:var(--muted);transition:all .2s;}
+.tab.active{color:var(--accent);border-bottom:2px solid var(--accent);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.main{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 152px);}
+.panel{padding:18px 22px;border-right:1px solid var(--border);}
+.panel:last-child{border-right:none;}
+.section-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px;letter-spacing:.3px;}
+input,select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;}
+input:focus,select:focus{border-color:var(--accent);}
+select option{background:var(--steel-mid);}
+.row{display:grid;gap:8px;margin-bottom:10px;}
+.c2{grid-template-columns:1fr 1fr;}
+.c3{grid-template-columns:1fr 1fr 1fr;}
+.c4{grid-template-columns:1fr 1fr 1fr 1fr;}
+.btn{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;transition:all .15s;text-transform:uppercase;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:hover{background:#e8960a;}
+.btn-secondary{background:var(--steel-light);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{background:var(--steel-mid);}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+.btn-danger:hover{background:rgba(239,68,68,.25);}
+.btn-green{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);}
+.btn-green:hover{background:rgba(34,197,94,.25);}
+.btn-blue{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);}
+.btn-blue:hover{background:rgba(59,130,246,.25);}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.route-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;position:relative;}
+.route-card .rdel{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;transition:color .15s;}
+.route-card .rdel:hover{color:var(--red);}
+.route-tag{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:8px;}
+.cost-table{width:100%;border-collapse:collapse;font-size:12px;}
+.cost-table th{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:7px 5px;border-bottom:1px solid var(--border);text-align:left;font-weight:600;}
+.cost-table td{padding:4px 4px;border-bottom:1px solid rgba(138,155,176,.08);}
+.cost-table tr:hover td{background:rgba(255,255,255,.02);}
+.cost-table input,.cost-table select{padding:5px 7px;font-size:12px;}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:3px 5px;border-radius:4px;transition:all .15s;}
+.del-btn:hover{background:rgba(239,68,68,.15);color:var(--red);}
+.summary-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+.summary-table th{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:8px;border-bottom:1px solid var(--border);text-align:left;}
+.summary-table td{padding:7px 8px;border-bottom:1px solid rgba(138,155,176,.1);}
+.summary-table tr:hover td{background:rgba(255,255,255,.03);}
+.subtotal-row td{background:rgba(244,160,18,.07);font-weight:600;color:var(--accent);}
+.grand-row td{background:rgba(244,160,18,.15);font-weight:700;color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:14px;border-top:2px solid var(--accent);}
+.transport-section-row td{background:rgba(59,130,246,.1);color:#60a5fa;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:700;border-top:1px solid rgba(59,130,246,.3);}
+.total-box{background:var(--steel-mid);border:2px solid var(--accent);border-radius:10px;padding:14px 18px;margin-top:14px;}
+.total-label{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+.total-value{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--accent);margin-top:4px;}
+.storage-result{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px;margin-top:8px;font-family:'Barlow Condensed',sans-serif;font-size:14px;display:none;}
+.history-table{width:100%;border-collapse:collapse;font-size:12px;}
+.history-table th{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:8px;border-bottom:1px solid var(--border);text-align:left;}
+.history-table td{padding:8px;border-bottom:1px solid rgba(138,155,176,.08);}
+.history-table tr:hover td{background:rgba(255,255,255,.03);}
+.template-editor{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--steel-light);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;margin:3px;color:var(--text);}
+.chip .cx{color:var(--muted);font-size:13px;cursor:pointer;line-height:1;}
+.chip .cx:hover{color:var(--red);}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.badge-amber{background:rgba(244,160,18,.2);color:var(--accent);}
+.badge-blue{background:rgba(59,130,246,.2);color:#60a5fa;}
+.badge-green{background:rgba(34,197,94,.2);color:var(--green);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:1000;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--steel-mid);border:1px solid var(--accent);border-radius:12px;padding:22px;width:90%;max-width:480px;}
+.modal h3{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--accent);margin-bottom:14px;letter-spacing:1px;text-transform:uppercase;}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+.info-box{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:6px;padding:9px 12px;font-size:11px;color:#93c5fd;margin-bottom:10px;}
+.info-box-green{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:6px;padding:9px 12px;font-size:11px;color:#86efac;margin-bottom:10px;}
+.tpl-filter-bar{background:var(--steel-mid);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px;}
+.lang-selector{display:flex;gap:6px;align-items:center;}
+.lang-btn{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;padding:5px 12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:var(--surface);color:var(--muted);transition:all .2s;text-transform:uppercase;}
+.lang-btn.active{background:var(--accent);color:#000;border-color:var(--accent);}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--steel);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.public-history-banner{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:12px;color:#86efac;}
+.history-mode-badge{background:rgba(244,160,18,.2);color:var(--accent);border:1px solid rgba(244,160,18,.4);border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+</style>
+</head>
+<body>
+
+<div class="train-header">
+  <div class="header-inner">
+    <div style="font-size:38px;line-height:1;">🚂</div>
+    <div>
+      <div class="header-title">Freight Calculator PRO</div>
+      <div class="header-sub">Cargo &middot; Sea &middot; Rail &middot; Road</div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:16px;">
+      <div class="lang-selector" id="uiLangSelector">
+        <span style="font-size:10px;color:var(--muted);letter-spacing:1px;">UI:</span>
+        <button class="lang-btn active" onclick="setUILang('ru')">RU</button>
+        <button class="lang-btn" onclick="setUILang('uk')">UA</button>
+        <button class="lang-btn" onclick="setUILang('en')">EN</button>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;color:var(--muted);" id="lblToday">Сегодня</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;" id="todayDate"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="rail-track"><div class="rail-tie"></div><div class="rail-tie"></div><div class="rail-tie"></div><div class="rail-tie"></div><div class="rail-tie"></div></div>
+
+<div class="tabs-bar">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('calc',this)" id="tabCalc">📋 Расчёт</div>
+    <div class="tab" onclick="switchTab('templates',this)" id="tabTemplates">📦 Шаблоны расходов</div>
+    <div class="tab" onclick="switchTab('history',this)" id="tabHistory">📈 История</div>
+  </div>
+</div>
+
+<!-- ========== TAB CALC ========== -->
+<div class="tab-panel active" id="tab-calc">
+<div class="main">
+
+<div class="panel">
+  <div class="section-label">📋 <span id="lblRequisites">Реквизиты</span></div>
+  <div class="row c2">
+    <div><label id="lblClient">Клиент</label><input id="client" placeholder="Название клиента"></div>
+    <div><label id="lblBooking">Букинг</label><input id="booking" placeholder="№ букинга"></div>
+  </div>
+
+  <div class="section-label" style="margin-top:14px;">🚢 <span id="lblLineTransport">Линия &amp; Транспорт</span></div>
+  <div class="row c2">
+    <div>
+      <label id="lblLine">Линия</label>
+      <div style="display:flex;gap:5px;">
+        <select id="line" style="flex:1;" onchange="onLineTransportChange()"></select>
+        <button class="btn btn-secondary btn-sm" onclick="openAddLineModal()" style="padding:0 10px;">+</button>
+      </div>
+    </div>
+    <div>
+      <label id="lblPortLoad">Порт загрузки</label>
+      <input id="portLoad" list="portLoadList" placeholder="Shanghai, CN" oninput="onLineTransportChange()">
+      <datalist id="portLoadList"></datalist>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:10px;">🚛 <span id="lblTransportTypes">Типы транспорта (маршруты)</span></div>
+  <div class="info-box" id="infoTransportTypes">Каждое направление рассчитывается отдельно по типу транспорта: Авто / Тент / ЖД</div>
+
+  <div class="section-label" style="margin-top:14px;">🗺️ <span id="lblRoutes">Маршруты</span></div>
+  <div id="routes"></div>
+  <button class="btn btn-secondary" onclick="addRoute()" style="width:100%;margin-top:4px;" id="btnAddRoute">+ Добавить маршрут</button>
+
+  <div class="section-label" style="margin-top:16px;">🕐 <span id="lblStorage">Хранение (опционально)</span></div>
+  <div class="row c2">
+    <div><label id="lblStartDate">Дата начала</label><input type="date" id="startDate"></div>
+    <div><label id="lblEndDate">Дата окончания</label><input type="date" id="endDate"></div>
+  </div>
+  <div class="row c2">
+    <div><label id="lblStorageRate">Ставка / день</label><input type="number" id="storageRate" placeholder="0" min="0"></div>
+    <div><label id="lblStorageCur">Валюта</label>
+      <select id="storageCurrency"><option value="USD">USD</option><option value="EUR">EUR</option><option value="UAH">UAH</option></select>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary btn-sm" onclick="calculateStorage()" id="btnCalcStorage">Посчитать хранение</button>
+    <button class="btn btn-green btn-sm" onclick="addStorageCost()" id="btnAddStorage">+ В расходы</button>
+  </div>
+  <div class="storage-result" id="storageResult"></div>
+
+  <div class="section-label" style="margin-top:16px;">💵 <span id="lblMarginSection">Маржа</span></div>
+  <div class="row c2">
+    <div><label id="lblMargin">Маржа (USD)</label><input type="number" id="margin" placeholder="0" min="0"></div>
+    <div style="display:flex;align-items:flex-end;">
+      <button class="btn btn-primary" style="width:100%;" onclick="calculateTotal()" id="btnCalculate">▶ Рассчитать</button>
+    </div>
+  </div>
+
+  <div class="total-box" id="totalBox" style="display:none;">
+    <div class="total-label" id="lblTotalUSD">Итого (USD)</div>
+    <div class="total-value" id="totalValue">—</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="totalBreakdown"></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="section-label">📦 <span id="lblCosts">Расходы</span></div>
+  <div class="btn-row" style="margin-bottom:10px;">
+    <button class="btn btn-secondary btn-sm" onclick="loadTemplateCosts()" id="btnAutoFill">📄 Автозаполнение</button>
+    <button class="btn btn-secondary btn-sm" onclick="addCostRow()" id="btnAddCost">+ Расход</button>
+  </div>
+
+  <table class="cost-table">
+    <thead>
+      <tr>
+        <th style="width:38%;" id="thCostName">Название</th>
+        <th style="width:14%;" id="thCostAmt">Сумма</th>
+        <th style="width:10%;" id="thCostCur">Вал.</th>
+        <th style="width:22%;text-align:center;" id="thCostPerUnit" title="Умножать на кол-во контейнеров маршрута">На ед.</th>
+        <th style="width:28px;"></th>
+      </tr>
+    </thead>
+    <tbody id="costBody"></tbody>
+  </table>
+
+  <div class="divider"></div>
+  <div class="section-label">📊 <span id="lblSummaryTable">Итоговая таблица</span></div>
+  <div id="summaryWrap" style="display:none;">
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th id="thSumRoute">Маршрут</th><th id="thSumType">Тип</th><th id="thSumTransport" style="text-align:center;">Транспорт</th><th style="text-align:center;" id="thSumQty">Кол.</th>
+          <th style="text-align:right;" id="thSumRate">Ставка/ед.</th><th style="text-align:right;" id="thSumTotal">Итого USD</th>
+        </tr>
+      </thead>
+      <tbody id="summaryBody"></tbody>
+    </table>
+  </div>
+
+  <div class="btn-row" style="margin-top:14px;">
+    <button class="btn btn-green" onclick="saveRecord()" id="btnSave">💾 Сохранить</button>
+    <button class="btn btn-blue" onclick="openPDFModal()" id="btnPDF">📄 PDF клиенту</button>
+    <button class="btn btn-secondary" onclick="exportFullExcel()" id="btnExcel">📊 Excel полный</button>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ========== TAB TEMPLATES ========== -->
+<div class="tab-panel" id="tab-templates">
+<div style="padding:22px;max-width:1000px;">
+  <div class="section-label">📦 <span id="lblFixedCosts">Фиксированные расходы</span></div>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:14px;" id="tplDesc">
+    Задайте фиксированные расходы по комбинации: Линия + Порт загрузки + Тип контейнера + Тип транспорта. При автозаполнении они подставятся автоматически.
+  </p>
+
+  <div class="tpl-filter-bar">
+    <div class="row c4" style="margin-bottom:10px;">
+      <div><label id="lblTplLine">Линия</label><select id="tplLine" onchange="loadTemplateEditor()"></select></div>
+      <div><label id="lblTplPort">Порт загрузки</label>
+        <input id="tplPort" list="tplPortList" placeholder="Shanghai, CN" oninput="loadTemplateEditor()">
+        <datalist id="tplPortList"></datalist>
+      </div>
+      <div><label id="lblTplCtype">Тип контейнера</label>
+        <select id="tplCtype" onchange="loadTemplateEditor()">
+          <option value="ALL">Все типы</option>
+          <option>20DV</option><option>40DV</option><option>40HC</option><option>20RF</option><option>40RF</option><option>LCL</option>
+        </select>
+      </div>
+      <div><label id="lblTplTransport">Тип транспорта</label>
+        <select id="tplTransport" onchange="loadTemplateEditor()">
+          <option>Авто</option><option>Тент</option><option>ЖД</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" onclick="saveTemplate()">💾 <span id="lblSaveTemplate">Сохранить шаблон</span></button>
+      <button class="btn btn-secondary btn-sm" onclick="copyTemplateModal()">📋 <span id="lblCopyTemplate">Копировать в...</span></button>
+      <div style="margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--muted);" id="tplEditorTitle">—</div>
+    </div>
+  </div>
+
+  <div class="template-editor" id="templateEditor">
+    <table class="cost-table" style="margin-bottom:10px;">
+      <thead>
+        <tr>
+          <th style="width:42%;" id="thTplName">Название расхода</th>
+          <th style="width:20%;" id="thTplAmt">Фикс. сумма</th>
+          <th style="width:13%;" id="thTplCur">Вал.</th>
+          <th style="width:18%;text-align:center;" id="thTplPerUnit">На ед.</th>
+          <th style="width:28px;"></th>
+        </tr>
+      </thead>
+      <tbody id="tplBody"></tbody>
+    </table>
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+      <div style="flex:2;min-width:140px;"><label id="lblNewTplName">Название</label><input id="newTplName" placeholder="Новый расход..."></div>
+      <div style="flex:0 0 90px;"><label id="lblNewTplVal">Сумма</label><input id="newTplVal" type="number" placeholder="0"></div>
+      <div style="flex:0 0 75px;"><label id="lblNewTplCur">Вал.</label>
+        <select id="newTplCur"><option value="USD">USD</option><option value="EUR">EUR</option><option value="UAH">UAH</option></select>
+      </div>
+      <div style="flex:0 0 80px;display:flex;flex-direction:column;"><label id="lblNewTplPU">На ед.</label>
+        <input type="checkbox" id="newTplPerUnit" checked style="width:auto;cursor:pointer;accent-color:var(--accent);margin-top:8px;">
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="addTplRow()" style="margin-bottom:1px;" id="btnAddTplRow">+ Добавить</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-label">🚢 <span id="lblManageLines">Управление линиями</span></div>
+  <div style="display:flex;gap:8px;margin-bottom:8px;max-width:420px;">
+    <input id="newLineInput" placeholder="Название новой линии...">
+    <button class="btn btn-primary" onclick="addLineFromSettings()" id="btnAddLine">+ Добавить</button>
+  </div>
+  <div style="margin-bottom:8px;">
+    <label id="lblNewPort" style="font-size:11px;color:var(--muted);">Новый порт загрузки</label>
+    <div style="display:flex;gap:8px;max-width:420px;margin-top:4px;">
+      <input id="newPortInput" placeholder="Shanghai, CN">
+      <button class="btn btn-primary" onclick="addPortFromSettings()" id="btnAddPort">+ Добавить</button>
+    </div>
+  </div>
+  <div id="linesChips" style="margin-bottom:10px;"></div>
+  <div id="portsChips"></div>
+</div>
+</div>
+
+<!-- ========== TAB HISTORY ========== -->
+<div class="tab-panel" id="tab-history">
+<div style="padding:22px;">
+  <div id="publicHistoryBanner" style="display:none;" class="public-history-banner">
+    👁 <span id="lblPublicView">Публичный просмотр истории — доступно всем по ссылке</span>
+    <span class="history-mode-badge" id="lblPublicBadge">PUBLIC</span>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <div class="section-label" style="margin-bottom:0;flex:1;">📈 <span id="lblHistoryTitle">История расчётов</span></div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-secondary btn-sm" onclick="copyHistoryLink()" id="btnShareHistory">🔗 <span id="lblShareLink">Поделиться</span></button>
+      <button class="btn btn-danger btn-sm" onclick="clearHistory()" id="btnClearHistory">🗑 <span id="lblClear">Очистить</span></button>
+    </div>
+  </div>
+  <div id="historyFilters" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <input id="historySearch" placeholder="🔍 Поиск..." style="max-width:220px;padding:6px 10px;" oninput="renderHistory()">
+    <select id="historyFilterLine" onchange="renderHistory()" style="max-width:140px;padding:6px 10px;">
+      <option value="">Все линии</option>
+    </select>
+    <select id="historyFilterTransport" onchange="renderHistory()" style="max-width:140px;padding:6px 10px;">
+      <option value="">Все транспорт</option>
+      <option>Авто</option><option>Тент</option><option>ЖД</option>
+    </select>
+  </div>
+  <table class="history-table">
+    <thead><tr>
+      <th id="thHDate">Дата</th><th id="thHClient">Клиент</th><th id="thHBooking">Букинг</th>
+      <th id="thHLine">Линия</th><th id="thHTransport">Транспорт</th>
+      <th id="thHTotal">Итого USD</th><th></th>
+    </tr></thead>
+    <tbody id="historyBody"></tbody>
+  </table>
+</div>
+</div>
+
+<!-- MODAL: Add Line -->
+<div class="modal-overlay" id="modalAddLine">
+  <div class="modal">
+    <h3 id="modalAddLineTitle">+ Добавить линию</h3>
+    <label id="lblModalLineName">Название линии</label>
+    <input id="modalLineInput" placeholder="например: HAPAG-LLOYD" style="margin:8px 0 14px;">
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="confirmAddLine()" id="btnConfirmLine">Добавить</button>
+      <button class="btn btn-secondary" onclick="closeModal('modalAddLine')" id="btnCancelLine">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PDF Language -->
+<div class="modal-overlay" id="modalPDF">
+  <div class="modal">
+    <h3 id="modalPDFTitle">📄 PDF клиенту</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;" id="modalPDFDesc">Выберите язык PDF-документа для клиента:</p>
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      <button class="btn btn-secondary" style="flex:1;" onclick="exportClientPDF('ru')" id="btnPDFRu">🇷🇺 Русский</button>
+      <button class="btn btn-secondary" style="flex:1;" onclick="exportClientPDF('uk')" id="btnPDFUk">🇺🇦 Українська</button>
+      <button class="btn btn-secondary" style="flex:1;" onclick="exportClientPDF('en')" id="btnPDFEn">🇬🇧 English</button>
+    </div>
+    <button class="btn btn-danger btn-sm" onclick="closeModal('modalPDF')" style="width:100%;" id="btnClosePDF">Отмена</button>
+  </div>
+</div>
+
+<!-- MODAL: Copy Template -->
+<div class="modal-overlay" id="modalCopyTemplate">
+  <div class="modal">
+    <h3>📋 <span id="modalCopyTitle">Копировать шаблон в...</span></h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;" id="modalCopyDesc">Скопировать текущий шаблон в другую комбинацию:</p>
+    <div class="row c2" style="margin-bottom:10px;">
+      <div><label>Линия</label><select id="copyToLine"></select></div>
+      <div><label>Порт</label><input id="copyToPort" placeholder="Порт загрузки"></div>
+    </div>
+    <div class="row c2" style="margin-bottom:14px;">
+      <div><label>Тип конт.</label>
+        <select id="copyToCtype">
+          <option value="ALL">Все типы</option>
+          <option>20DV</option><option>40DV</option><option>40HC</option><option>20RF</option><option>40RF</option><option>LCL</option>
+        </select>
+      </div>
+      <div><label>Транспорт</label>
+        <select id="copyToTransport">
+          <option>Авто</option><option>Тент</option><option>ЖД</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="confirmCopyTemplate()" id="btnConfirmCopy">Копировать</button>
+      <button class="btn btn-secondary" onclick="closeModal('modalCopyTemplate')" id="btnCancelCopy">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// UI LANGUAGE SYSTEM
+// ============================================================
+const LANGS = {
+  ru: {
+    today:'Сегодня', tabCalc:'📋 Расчёт', tabTemplates:'📦 Шаблоны расходов', tabHistory:'📈 История',
+    lblRequisites:'Реквизиты', lblClient:'Клиент', lblBooking:'Букинг',
+    lblLineTransport:'Линия & Транспорт', lblLine:'Линия', lblPortLoad:'Порт загрузки',
+    lblTransportTypes:'Типы транспорта (маршруты)',
+    infoTransportTypes:'Каждое направление рассчитывается отдельно по типу транспорта: Авто / Тент / ЖД',
+    lblRoutes:'Маршруты', btnAddRoute:'+ Добавить маршрут',
+    lblStorage:'Хранение (опционально)', lblStartDate:'Дата начала', lblEndDate:'Дата окончания',
+    lblStorageRate:'Ставка / день', lblStorageCur:'Валюта',
+    btnCalcStorage:'Посчитать хранение', btnAddStorage:'+ В расходы',
+    lblMarginSection:'Маржа', lblMargin:'Маржа (USD)', btnCalculate:'▶ Рассчитать',
+    lblTotalUSD:'Итого (USD)', lblCosts:'Расходы', btnAutoFill:'📄 Автозаполнение', btnAddCost:'+ Расход',
+    thCostName:'Название', thCostAmt:'Сумма', thCostCur:'Вал.', thCostPerUnit:'На ед.',
+    lblSummaryTable:'Итоговая таблица',
+    thSumRoute:'Маршрут', thSumType:'Тип конт.', thSumTransport:'Транспорт', thSumQty:'Кол.', thSumRate:'Ставка/ед.', thSumTotal:'Итого USD',
+    btnSave:'💾 Сохранить', btnPDF:'📄 PDF клиенту', btnExcel:'📊 Excel полный',
+    lblFixedCosts:'Фиксированные расходы',
+    tplDesc:'Задайте фиксированные расходы по комбинации: Линия + Порт загрузки + Тип контейнера + Тип транспорта.',
+    lblTplLine:'Линия', lblTplPort:'Порт загрузки', lblTplCtype:'Тип контейнера', lblTplTransport:'Тип транспорта',
+    lblSaveTemplate:'Сохранить шаблон', lblCopyTemplate:'Копировать в...',
+    thTplName:'Название расхода', thTplAmt:'Фикс. сумма', thTplCur:'Вал.', thTplPerUnit:'На ед.',
+    lblNewTplName:'Название', lblNewTplVal:'Сумма', lblNewTplCur:'Вал.', lblNewTplPU:'На ед.',
+    btnAddTplRow:'+ Добавить',
+    lblManageLines:'Управление линиями', btnAddLine:'+ Добавить', lblNewPort:'Новый порт загрузки', btnAddPort:'+ Добавить',
+    lblHistoryTitle:'История расчётов', lblShareLink:'Поделиться', lblClear:'Очистить',
+    thHDate:'Дата', thHClient:'Клиент', thHBooking:'Букинг', thHLine:'Линия', thHTransport:'Транспорт', thHTotal:'Итого USD',
+    historyEmpty:'История пуста',
+    lblPublicView:'Публичный просмотр истории — доступно всем по ссылке',
+    modalAddLineTitle:'+ Добавить линию', lblModalLineName:'Название линии',
+    btnConfirmLine:'Добавить', btnCancelLine:'Отмена',
+    modalPDFTitle:'📄 PDF клиенту', modalPDFDesc:'Выберите язык PDF-документа:',
+    btnPDFRu:'🇷🇺 Русский', btnPDFUk:'🇺🇦 Українська', btnPDFEn:'🇬🇧 English', btnClosePDF:'Отмена',
+    modalCopyTitle:'Копировать шаблон в...', modalCopyDesc:'Скопировать текущий шаблон в другую комбинацию:',
+    btnConfirmCopy:'Копировать', btnCancelCopy:'Отмена',
+    routeLabel:'Маршрут', fromLbl:'Откуда', toLbl:'Куда',
+    ctypeLbl:'Тип контейнера', qtyLbl:'Кол-во', transportLbl:'Транспорт',
+    linkCopied:'✓ Ссылка скопирована!', templateSaved:'✓ Сохранено!',
+    recordSaved:'✓ Сохранено', calcFirst:'Сначала нажми «Рассчитать»',
+    addRouteFirst:'Добавь хотя бы один маршрут', selectBothDates:'Выбери обе даты',
+    calcStorageFirst:'Сначала посчитай хранение', clearConfirm:'Очистить всю историю?',
+    lblPerUnit:'на ед.', lblFixed:'фикс.',
+  },
+  uk: {
+    today:'Сьогодні', tabCalc:'📋 Розрахунок', tabTemplates:'📦 Шаблони витрат', tabHistory:'📈 Історія',
+    lblRequisites:'Реквізити', lblClient:'Клієнт', lblBooking:'Букінг',
+    lblLineTransport:'Лінія & Транспорт', lblLine:'Лінія', lblPortLoad:'Порт завантаження',
+    lblTransportTypes:'Типи транспорту (маршрути)',
+    infoTransportTypes:'Кожен напрямок розраховується окремо за типом транспорту: Авто / Тент / ЗД',
+    lblRoutes:'Маршрути', btnAddRoute:'+ Додати маршрут',
+    lblStorage:'Зберігання (опціонально)', lblStartDate:'Дата початку', lblEndDate:'Дата закінчення',
+    lblStorageRate:'Ставка / день', lblStorageCur:'Валюта',
+    btnCalcStorage:'Порахувати зберігання', btnAddStorage:'+ До витрат',
+    lblMarginSection:'Маржа', lblMargin:'Маржа (USD)', btnCalculate:'▶ Розрахувати',
+    lblTotalUSD:'Разом (USD)', lblCosts:'Витрати', btnAutoFill:'📄 Автозаповнення', btnAddCost:'+ Витрата',
+    thCostName:'Назва', thCostAmt:'Сума', thCostCur:'Вал.', thCostPerUnit:'На од.',
+    lblSummaryTable:'Підсумкова таблиця',
+    thSumRoute:'Маршрут', thSumType:'Тип конт.', thSumTransport:'Транспорт', thSumQty:'К-сть', thSumRate:'Ставка/од.', thSumTotal:'Разом USD',
+    btnSave:'💾 Зберегти', btnPDF:'📄 PDF клієнту', btnExcel:'📊 Excel повний',
+    lblFixedCosts:'Фіксовані витрати',
+    tplDesc:'Задайте фіксовані витрати за комбінацією: Лінія + Порт завантаження + Тип контейнера + Тип транспорту.',
+    lblTplLine:'Лінія', lblTplPort:'Порт завантаження', lblTplCtype:'Тип контейнера', lblTplTransport:'Тип транспорту',
+    lblSaveTemplate:'Зберегти шаблон', lblCopyTemplate:'Копіювати в...',
+    thTplName:'Назва витрати', thTplAmt:'Фікс. сума', thTplCur:'Вал.', thTplPerUnit:'На од.',
+    lblNewTplName:'Назва', lblNewTplVal:'Сума', lblNewTplCur:'Вал.', lblNewTplPU:'На од.',
+    btnAddTplRow:'+ Додати',
+    lblManageLines:'Управління лініями', btnAddLine:'+ Додати', lblNewPort:'Новий порт завантаження', btnAddPort:'+ Додати',
+    lblHistoryTitle:'Історія розрахунків', lblShareLink:'Поділитися', lblClear:'Очистити',
+    thHDate:'Дата', thHClient:'Клієнт', thHBooking:'Букінг', thHLine:'Лінія', thHTransport:'Транспорт', thHTotal:'Разом USD',
+    historyEmpty:'Історія порожня',
+    lblPublicView:'Публічний перегляд історії — доступно всім за посиланням',
+    modalAddLineTitle:'+ Додати лінію', lblModalLineName:'Назва лінії',
+    btnConfirmLine:'Додати', btnCancelLine:'Скасувати',
+    modalPDFTitle:'📄 PDF клієнту', modalPDFDesc:'Оберіть мову PDF-документа:',
+    btnPDFRu:'🇷🇺 Русский', btnPDFUk:'🇺🇦 Українська', btnPDFEn:'🇬🇧 English', btnClosePDF:'Скасувати',
+    modalCopyTitle:'Копіювати шаблон в...', modalCopyDesc:'Скопіювати поточний шаблон в іншу комбінацію:',
+    btnConfirmCopy:'Копіювати', btnCancelCopy:'Скасувати',
+    routeLabel:'Маршрут', fromLbl:'Звідки', toLbl:'Куди',
+    ctypeLbl:'Тип контейнера', qtyLbl:'К-сть', transportLbl:'Транспорт',
+    linkCopied:'✓ Посилання скопійовано!', templateSaved:'✓ Збережено!',
+    recordSaved:'✓ Збережено', calcFirst:'Спочатку натисни «Розрахувати»',
+    addRouteFirst:'Додай хоча б один маршрут', selectBothDates:'Вибери обидві дати',
+    calcStorageFirst:'Спочатку порахуй зберігання', clearConfirm:'Очистити всю історію?',
+    lblPerUnit:'на од.', lblFixed:'фікс.',
+  },
+  en: {
+    today:'Today', tabCalc:'📋 Calculator', tabTemplates:'📦 Cost Templates', tabHistory:'📈 History',
+    lblRequisites:'Details', lblClient:'Client', lblBooking:'Booking',
+    lblLineTransport:'Line & Transport', lblLine:'Shipping Line', lblPortLoad:'Loading Port',
+    lblTransportTypes:'Transport Types (routes)',
+    infoTransportTypes:'Each direction is calculated separately by transport type: Truck / Tarpaulin / Rail',
+    lblRoutes:'Routes', btnAddRoute:'+ Add Route',
+    lblStorage:'Storage (optional)', lblStartDate:'Start Date', lblEndDate:'End Date',
+    lblStorageRate:'Rate / day', lblStorageCur:'Currency',
+    btnCalcStorage:'Calculate Storage', btnAddStorage:'+ Add to Costs',
+    lblMarginSection:'Margin', lblMargin:'Margin (USD)', btnCalculate:'▶ Calculate',
+    lblTotalUSD:'Total (USD)', lblCosts:'Costs', btnAutoFill:'📄 Auto-fill', btnAddCost:'+ Cost',
+    thCostName:'Name', thCostAmt:'Amount', thCostCur:'Cur.', thCostPerUnit:'Per unit',
+    lblSummaryTable:'Summary Table',
+    thSumRoute:'Route', thSumType:'Cont. Type', thSumTransport:'Transport', thSumQty:'Qty', thSumRate:'Rate/unit', thSumTotal:'Total USD',
+    btnSave:'💾 Save', btnPDF:'📄 Client PDF', btnExcel:'📊 Full Excel',
+    lblFixedCosts:'Fixed Costs',
+    tplDesc:'Set fixed costs by combination: Line + Loading Port + Container Type + Transport Type.',
+    lblTplLine:'Line', lblTplPort:'Loading Port', lblTplCtype:'Container Type', lblTplTransport:'Transport Type',
+    lblSaveTemplate:'Save Template', lblCopyTemplate:'Copy to...',
+    thTplName:'Cost Name', thTplAmt:'Fixed Amount', thTplCur:'Cur.', thTplPerUnit:'Per unit',
+    lblNewTplName:'Name', lblNewTplVal:'Amount', lblNewTplCur:'Cur.', lblNewTplPU:'Per unit',
+    btnAddTplRow:'+ Add',
+    lblManageLines:'Manage Lines', btnAddLine:'+ Add', lblNewPort:'New Loading Port', btnAddPort:'+ Add',
+    lblHistoryTitle:'Calculation History', lblShareLink:'Share', lblClear:'Clear',
+    thHDate:'Date', thHClient:'Client', thHBooking:'Booking', thHLine:'Line', thHTransport:'Transport', thHTotal:'Total USD',
+    historyEmpty:'History is empty',
+    lblPublicView:'Public history view — accessible to anyone with the link',
+    modalAddLineTitle:'+ Add Line', lblModalLineName:'Line Name',
+    btnConfirmLine:'Add', btnCancelLine:'Cancel',
+    modalPDFTitle:'📄 Client PDF', modalPDFDesc:'Choose PDF document language:',
+    btnPDFRu:'🇷🇺 Russian', btnPDFUk:'🇺🇦 Ukrainian', btnPDFEn:'🇬🇧 English', btnClosePDF:'Cancel',
+    modalCopyTitle:'Copy Template to...', modalCopyDesc:'Copy current template to another combination:',
+    btnConfirmCopy:'Copy', btnCancelCopy:'Cancel',
+    routeLabel:'Route', fromLbl:'From', toLbl:'To',
+    ctypeLbl:'Container Type', qtyLbl:'Quantity', transportLbl:'Transport',
+    linkCopied:'✓ Link copied!', templateSaved:'✓ Saved!',
+    recordSaved:'✓ Saved', calcFirst:'Press «Calculate» first',
+    addRouteFirst:'Add at least one route', selectBothDates:'Select both dates',
+    calcStorageFirst:'Calculate storage first', clearConfirm:'Clear all history?',
+    lblPerUnit:'per unit', lblFixed:'fixed',
+  }
+};
+
+let UI_LANG = localStorage.getItem('fc_ui_lang') || 'ru';
+
+function setUILang(lang) {
+  UI_LANG = lang;
+  localStorage.setItem('fc_ui_lang', lang);
+  document.querySelectorAll('#uiLangSelector .lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('#uiLangSelector .lang-btn:nth-child('+(lang==='ru'?1:lang==='uk'?2:3)+')')?.classList.add('active');
+  applyUILang();
+}
+
+function applyUILang() {
+  const L = LANGS[UI_LANG] || LANGS.ru;
+  const ids = Object.keys(L);
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'INPUT' || el.tagName === 'SELECT') return;
+    if (el.tagName === 'BUTTON') { el.textContent = L[id]; return; }
+    el.innerHTML = L[id];
+  });
+  // Special: tab labels
+  document.getElementById('tabCalc').innerHTML = L.tabCalc;
+  document.getElementById('tabTemplates').innerHTML = L.tabTemplates;
+  document.getElementById('tabHistory').innerHTML = L.tabHistory;
+  document.getElementById('lblToday').textContent = L.today;
+  // Refresh route cards labels
+  document.querySelectorAll('.route-card').forEach(card => {
+    const lbs = card.querySelectorAll('label');
+    if (lbs[0]) lbs[0].textContent = L.fromLbl;
+    if (lbs[1]) lbs[1].textContent = L.toLbl;
+    if (lbs[2]) lbs[2].textContent = L.ctypeLbl;
+    if (lbs[3]) lbs[3].textContent = L.qtyLbl;
+    if (lbs[4]) lbs[4].textContent = L.transportLbl;
+  });
+}
+
+// ============================================================
+// PDF LANGUAGE STRINGS
+// ============================================================
+const PDF_LANGS = {
+  ru: {
+    title:'ПОДТВЕРЖДЕНИЕ ФРАХТОВОЙ СТАВКИ',
+    sub:'Грузоперевозки · Море · Железная дорога · Авто',
+    clientLbl:'КЛИЕНТ / CLIENT', bookingLbl:'БУКИНГ / BOOKING',
+    lineLbl:'ЛИНИЯ / LINE', transportLbl:'ВИД ТРАНСПОРТА',
+    sectionTitle:'КОМПЛЕКСНАЯ СТАВКА / ALL-IN FREIGHT RATE',
+    tableHeaders:['МАРШРУТ / ROUTE','ТИП','КОЛ-ВО','СТАВКА / ЕД.','ИТОГО'],
+    totalLabel:'ИТОГО / GRAND TOTAL',
+    extraLabel:'ДОПОЛНИТЕЛЬНЫЕ РАСХОДЫ / ADDITIONAL CHARGES',
+    note1:'Данное предложение носит коммерческий характер. Ставки действительны на дату выставления.',
+    note2:'This rate confirmation is a commercial offer. Rates are valid as of the issue date.',
+    transportSection:'МАРШРУТЫ ПО ТРАНСПОРТУ',
+  },
+  uk: {
+    title:'ПІДТВЕРДЖЕННЯ ФРАХТОВОЇ СТАВКИ',
+    sub:'Вантажоперевезення · Море · Залізниця · Авто',
+    clientLbl:'КЛІЄНТ / CLIENT', bookingLbl:'БУКІНГ / BOOKING',
+    lineLbl:'ЛІНІЯ / LINE', transportLbl:'ВИД ТРАНСПОРТУ',
+    sectionTitle:'КОМПЛЕКСНА СТАВКА / ALL-IN FREIGHT RATE',
+    tableHeaders:['МАРШРУТ / ROUTE','ТИП','К-СТЬ','СТАВКА / ОД.','РАЗОМ'],
+    totalLabel:'РАЗОМ / GRAND TOTAL',
+    extraLabel:'ДОДАТКОВІ ВИТРАТИ / ADDITIONAL CHARGES',
+    note1:'Дана пропозиція має комерційний характер. Ставки дійсні на дату виставлення.',
+    note2:'This rate confirmation is a commercial offer. Rates are valid as of the issue date.',
+    transportSection:'МАРШРУТИ ЗА ТРАНСПОРТОМ',
+  },
+  en: {
+    title:'FREIGHT RATE CONFIRMATION',
+    sub:'Cargo · Sea · Rail · Road',
+    clientLbl:'CLIENT', bookingLbl:'BOOKING',
+    lineLbl:'SHIPPING LINE', transportLbl:'TRANSPORT TYPE',
+    sectionTitle:'ALL-IN FREIGHT RATE',
+    tableHeaders:['ROUTE','TYPE','QTY','RATE / UNIT','TOTAL'],
+    totalLabel:'GRAND TOTAL',
+    extraLabel:'ADDITIONAL CHARGES',
+    note1:'This rate confirmation is a commercial offer. Rates are valid as of the issue date.',
+    note2:'',
+    transportSection:'ROUTES BY TRANSPORT',
+  }
+};
+
+// ============================================================
+// DEFAULTS
+// ============================================================
+const DEFAULT_LINES = ["MAERSK","MSC","CMA CGM","HAPAG-LLOYD","COSCO"];
+const DEFAULT_PORTS = ["Shanghai, CN","Ningbo, CN","Qingdao, CN","Guangzhou, CN","Tianjin, CN","Busan, KR","Singapore, SG","Rotterdam, NL","Hamburg, DE"];
+
+// Default templates: key = transport type, value = array of cost rows
+const DEFAULT_TEMPLATES = {
+  "Авто":[
+    {name:"THC",value:"",currency:"USD",perUnit:true},
+    {name:"Import Merchant Haulage Fee",value:"",currency:"USD",perUnit:true},
+    {name:"ISPS",value:"",currency:"USD",perUnit:true},
+    {name:"Carrier's Release Fee",value:"",currency:"USD",perUnit:true},
+    {name:"Container Maintenance Repair Fee",value:"",currency:"USD",perUnit:true},
+    {name:"Fuel Energy Transition Charge",value:"",currency:"USD",perUnit:true},
+    {name:"Custom transit document - T1",value:"",currency:"USD",perUnit:false},
+    {name:"DSK document",value:"",currency:"USD",perUnit:false},
+    {name:"Уточнение к Т1",value:"",currency:"USD",perUnit:false},
+    {name:"Авто",value:"",currency:"USD",perUnit:false}
+  ],
+  "Тент":[
+    {name:"THC",value:"",currency:"USD",perUnit:true},
+    {name:"Import Merchant Haulage Fee",value:"",currency:"USD",perUnit:true},
+    {name:"ISPS",value:"",currency:"USD",perUnit:true},
+    {name:"Carrier's Release Fee",value:"",currency:"USD",perUnit:true},
+    {name:"Container Maintenance Repair Fee",value:"",currency:"USD",perUnit:true},
+    {name:"Fuel Energy Transition Charge",value:"",currency:"USD",perUnit:true},
+    {name:"Custom transit document - T1",value:"",currency:"USD",perUnit:false},
+    {name:"DSK document",value:"",currency:"USD",perUnit:false},
+    {name:"Перетарка",value:"",currency:"USD",perUnit:true},
+    {name:"Перемещение по порту",value:"",currency:"USD",perUnit:false},
+    {name:"Уточнение к Т1",value:"",currency:"USD",perUnit:false},
+    {name:"Авто",value:"",currency:"USD",perUnit:false}
+  ],
+  "ЖД":[
+    {name:"ЖД тариф",value:"",currency:"USD",perUnit:true},
+    {name:"Последняя миля (авто)",value:"",currency:"USD",perUnit:false},
+    {name:"THC",value:"",currency:"USD",perUnit:true},
+    {name:"DSK document",value:"",currency:"USD",perUnit:false},
+  ]
+};
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('ru-RU',{day:'2-digit',month:'short',year:'numeric'});
+window.lastTotal = 0; window.storageTotal = 0; window.storageCur = 'USD';
+window.lastSummaryRows = []; window.lastExtraCosts = [];
+
+window.onload = () => {
+  loadLines(); loadPorts();
+  addRoute();
+  loadTemplateEditor();
+  applyUILang();
+  checkPublicHistoryMode();
+};
+
+// ============================================================
+// PUBLIC HISTORY (URL hash mode)
+// ============================================================
+function checkPublicHistoryMode() {
+  if (window.location.hash === '#history') {
+    // Switch to history tab automatically
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-history').classList.add('active');
+    document.getElementById('tabHistory').classList.add('active');
+    document.getElementById('publicHistoryBanner').style.display = 'flex';
+    renderHistory();
+  }
+}
+
+function copyHistoryLink() {
+  const url = window.location.href.split('#')[0] + '#history';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('btnShareHistory');
+      const orig = btn.innerHTML;
+      btn.textContent = LANGS[UI_LANG].linkCopied;
+      btn.style.background = 'var(--green)'; btn.style.color = '#000';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; btn.style.color = ''; }, 2000);
+    });
+  } else {
+    prompt('Ссылка:', url);
+  }
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'templates') refreshTemplatesTab();
+  if (name === 'history') renderHistory();
+}
+
+// ============================================================
+// LINES & PORTS
+// ============================================================
+function getLines() { return JSON.parse(localStorage.getItem('fc_lines') || JSON.stringify(DEFAULT_LINES)); }
+function saveLines(l) { localStorage.setItem('fc_lines', JSON.stringify(l)); }
+function getPorts() { return JSON.parse(localStorage.getItem('fc_ports') || JSON.stringify(DEFAULT_PORTS)); }
+function savePorts(p) { localStorage.setItem('fc_ports', JSON.stringify(p)); }
+
+function loadLines() {
+  const lines = getLines();
+  ['line','tplLine','copyToLine'].forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    const prev = el.value; el.innerHTML = '';
+    lines.forEach(l => { const o = document.createElement('option'); o.textContent = l; el.appendChild(o); });
+    if (prev && lines.includes(prev)) el.value = prev;
+  });
+}
+
+function loadPorts() {
+  const ports = getPorts();
+  ['portLoadList','tplPortList'].forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    el.innerHTML = '';
+    ports.forEach(p => { const o = document.createElement('option'); o.value = p; el.appendChild(o); });
+  });
+}
+
+function openAddLineModal() {
+  document.getElementById('modalAddLine').classList.add('open');
+  document.getElementById('modalLineInput').value = '';
+  setTimeout(() => document.getElementById('modalLineInput').focus(), 100);
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function confirmAddLine() {
+  const val = document.getElementById('modalLineInput').value.trim(); if (!val) return;
+  const lines = getLines(); if (!lines.includes(val)) { lines.push(val); saveLines(lines); }
+  closeModal('modalAddLine'); loadLines(); renderLinesChips();
+}
+function addLineFromSettings() {
+  const val = document.getElementById('newLineInput').value.trim(); if (!val) return;
+  const lines = getLines(); if (!lines.includes(val)) { lines.push(val); saveLines(lines); }
+  document.getElementById('newLineInput').value = ''; loadLines(); renderLinesChips();
+}
+function removeLine(name) { saveLines(getLines().filter(l => l !== name)); loadLines(); renderLinesChips(); }
+function renderLinesChips() {
+  const wrap = document.getElementById('linesChips'); wrap.innerHTML = '';
+  getLines().forEach(l => {
+    const c = document.createElement('span'); c.className = 'chip';
+    c.innerHTML = l + ' <span class="cx" onclick="removeLine(\'' + l.replace(/'/g,"\\'") + '\')">&times;</span>';
+    wrap.appendChild(c);
+  });
+}
+
+function addPortFromSettings() {
+  const val = document.getElementById('newPortInput').value.trim(); if (!val) return;
+  const ports = getPorts(); if (!ports.includes(val)) { ports.push(val); savePorts(ports); }
+  document.getElementById('newPortInput').value = ''; loadPorts(); renderPortsChips();
+}
+function removePort(name) { savePorts(getPorts().filter(p => p !== name)); loadPorts(); renderPortsChips(); }
+function renderPortsChips() {
+  const wrap = document.getElementById('portsChips'); wrap.innerHTML = '';
+  getPorts().forEach(p => {
+    const c = document.createElement('span'); c.className = 'chip';
+    c.innerHTML = p + ' <span class="cx" onclick="removePort(\'' + p.replace(/'/g,"\\'") + '\')">&times;</span>';
+    wrap.appendChild(c);
+  });
+}
+
+function refreshTemplatesTab() { loadLines(); loadPorts(); renderLinesChips(); renderPortsChips(); loadTemplateEditor(); }
+
+// ============================================================
+// TEMPLATES — keyed by line + port + ctype + transport
+// ============================================================
+function getTplKey(line, port, ctype, transport) {
+  return 'fc_tpl4__' + (line||'') + '__' + (port||'') + '__' + (ctype||'ALL') + '__' + (transport||'');
+}
+function getTemplate(line, port, ctype, transport) {
+  // Lookup order: exact match > port+transport > transport only
+  const keys = [
+    getTplKey(line, port, ctype, transport),
+    getTplKey(line, port, 'ALL', transport),
+    getTplKey(line, '', ctype, transport),
+    getTplKey(line, '', 'ALL', transport),
+    getTplKey('', '', 'ALL', transport),
+  ];
+  for (const k of keys) {
+    const stored = localStorage.getItem(k);
+    if (stored) { try { return JSON.parse(stored); } catch(e) {} }
+  }
+  return (DEFAULT_TEMPLATES[transport] || []).map(r => ({...r}));
+}
+function saveTemplateStore(line, port, ctype, transport, items) {
+  localStorage.setItem(getTplKey(line, port, ctype, transport), JSON.stringify(items));
+}
+
+function loadTemplateEditor() {
+  const line = document.getElementById('tplLine')?.value;
+  const port = document.getElementById('tplPort')?.value || '';
+  const ctype = document.getElementById('tplCtype')?.value || 'ALL';
+  const transport = document.getElementById('tplTransport')?.value;
+  if (!line || !transport) return;
+  const portLabel = port || '*';
+  const ctypeLabel = ctype;
+  document.getElementById('tplEditorTitle').textContent = line + ' / ' + portLabel + ' / ' + ctypeLabel + ' / ' + transport;
+  renderTplTable(getTemplate(line, port, ctype, transport));
+}
+
+function renderTplTable(items) {
+  const tbody = document.getElementById('tplBody'); tbody.innerHTML = '';
+  items.forEach((item, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td><input value="' + esc(item.name) + '" data-field="name" data-idx="' + i + '"></td>' +
+      '<td><input type="number" value="' + (item.value||'') + '" data-field="value" data-idx="' + i + '" placeholder="0"></td>' +
+      '<td><select data-field="currency" data-idx="' + i + '">' +
+        '<option value="USD"' + (item.currency==='USD'?' selected':'') + '>USD</option>' +
+        '<option value="EUR"' + (item.currency==='EUR'?' selected':'') + '>EUR</option>' +
+        '<option value="UAH"' + (item.currency==='UAH'?' selected':'') + '>UAH</option>' +
+      '</select></td>' +
+      '<td style="text-align:center;"><input type="checkbox" data-field="perUnit" data-idx="' + i + '" ' + (item.perUnit?'checked':'') + ' style="width:auto;cursor:pointer;accent-color:var(--accent);"></td>' +
+      '<td><button class="del-btn" onclick="removeTplRow(' + i + ')">&times;</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function collectTplItems() {
+  const items = [];
+  document.querySelectorAll('#tplBody tr').forEach(tr => {
+    items.push({
+      name: tr.querySelector('[data-field=name]')?.value || '',
+      value: tr.querySelector('[data-field=value]')?.value || '',
+      currency: tr.querySelector('[data-field=currency]')?.value || 'USD',
+      perUnit: tr.querySelector('[data-field=perUnit]')?.checked || false
+    });
+  });
+  return items;
+}
+
+function addTplRow() {
+  const name = document.getElementById('newTplName').value.trim(); if (!name) return;
+  const val = document.getElementById('newTplVal').value || '';
+  const cur = document.getElementById('newTplCur').value || 'USD';
+  const perUnit = document.getElementById('newTplPerUnit').checked;
+  const items = collectTplItems();
+  items.push({name, value:val, currency:cur, perUnit});
+  renderTplTable(items);
+  document.getElementById('newTplName').value = '';
+  document.getElementById('newTplVal').value = '';
+}
+function removeTplRow(i) { const items = collectTplItems(); items.splice(i,1); renderTplTable(items); }
+
+function saveTemplate() {
+  const line = document.getElementById('tplLine').value;
+  const port = document.getElementById('tplPort').value || '';
+  const ctype = document.getElementById('tplCtype').value || 'ALL';
+  const transport = document.getElementById('tplTransport').value;
+  // Also save port to list if new
+  if (port) { const ports = getPorts(); if (!ports.includes(port)) { ports.push(port); savePorts(ports); loadPorts(); } }
+  saveTemplateStore(line, port, ctype, transport, collectTplItems());
+  const btn = event.target;
+  const orig = btn.innerHTML;
+  btn.textContent = LANGS[UI_LANG].templateSaved; btn.style.background='var(--green)'; btn.style.color='#000';
+  setTimeout(() => { btn.innerHTML = orig; btn.style.background=''; btn.style.color=''; }, 1600);
+}
+
+function copyTemplateModal() {
+  loadLines();
+  document.getElementById('copyToPort').value = document.getElementById('tplPort').value || '';
+  document.getElementById('copyToCtype').value = document.getElementById('tplCtype').value || 'ALL';
+  document.getElementById('copyToTransport').value = document.getElementById('tplTransport').value;
+  document.getElementById('modalCopyTemplate').classList.add('open');
+}
+function confirmCopyTemplate() {
+  const srcLine = document.getElementById('tplLine').value;
+  const srcPort = document.getElementById('tplPort').value || '';
+  const srcCtype = document.getElementById('tplCtype').value || 'ALL';
+  const srcTransport = document.getElementById('tplTransport').value;
+  const destLine = document.getElementById('copyToLine').value;
+  const destPort = document.getElementById('copyToPort').value || '';
+  const destCtype = document.getElementById('copyToCtype').value || 'ALL';
+  const destTransport = document.getElementById('copyToTransport').value;
+  const items = getTemplate(srcLine, srcPort, srcCtype, srcTransport);
+  saveTemplateStore(destLine, destPort, destCtype, destTransport, items);
+  closeModal('modalCopyTemplate');
+  alert('✓ Скопировано!');
+}
+
+// ============================================================
+// ROUTES — each route has its own transport type
+// ============================================================
+let routeCounter = 0;
+
+function addRoute() {
+  routeCounter++;
+  const L = LANGS[UI_LANG] || LANGS.ru;
+  const div = document.createElement('div'); div.className = 'route-card';
+  div.innerHTML = '<button class="rdel" onclick="this.parentElement.remove()">&times;</button>' +
+    '<div class="route-tag">' + L.routeLabel + ' #' + routeCounter + '</div>' +
+    '<div class="row c2" style="margin-bottom:7px;">' +
+      '<div><label>' + L.fromLbl + '</label><input placeholder="Shanghai, CN" class="r-from"></div>' +
+      '<div><label>' + L.toLbl + '</label><input placeholder="Odesa, UA" class="r-to"></div>' +
+    '</div>' +
+    '<div class="row c3" style="margin-bottom:0;">' +
+      '<div><label>' + L.ctypeLbl + '</label><select class="r-ctype">' +
+        '<option>20DV</option><option>40DV</option><option>40HC</option><option>20RF</option><option>40RF</option><option>LCL</option>' +
+      '</select></div>' +
+      '<div><label>' + L.qtyLbl + '</label><input type="number" class="r-qty" placeholder="1" min="1" value="1"></div>' +
+      '<div><label>' + L.transportLbl + '</label><select class="r-transport">' +
+        '<option>Авто</option><option>Тент</option><option>ЖД</option>' +
+      '</select></div>' +
+    '</div>';
+  document.getElementById('routes').appendChild(div);
+}
+
+function getRoutes() {
+  const routes = [];
+  document.querySelectorAll('.route-card').forEach(r => {
+    routes.push({
+      from: r.querySelector('.r-from')?.value || '',
+      to: r.querySelector('.r-to')?.value || '',
+      ctype: r.querySelector('.r-ctype')?.value || '',
+      qty: parseInt(r.querySelector('.r-qty')?.value) || 1,
+      transport: r.querySelector('.r-transport')?.value || 'Авто'
+    });
+  });
+  return routes;
+}
+
+// ============================================================
+// COSTS
+// ============================================================
+function onLineTransportChange() { /* no-op: autofill is manual */ }
+
+function loadTemplateCosts() {
+  document.getElementById('costBody').innerHTML = '';
+  const line = document.getElementById('line').value;
+  const port = document.getElementById('portLoad').value || '';
+  if (!line) return;
+  // Collect unique transport types from routes
+  const routes = getRoutes();
+  const transports = routes.length > 0
+    ? [...new Set(routes.map(r => r.transport))]
+    : ['Авто'];
+  const ctypes = routes.length > 0
+    ? [...new Set(routes.map(r => r.ctype))]
+    : ['ALL'];
+
+  // Add costs grouped by transport type
+  transports.forEach(transport => {
+    // Try to find best matching template (per ctype if only one, else ALL)
+    const ctype = ctypes.length === 1 ? ctypes[0] : 'ALL';
+    const items = getTemplate(line, port, ctype, transport);
+    // Add a separator row
+    addCostSeparatorRow('── ' + transport + ' ──');
+    items.forEach(c => addCostRow(c.name, c.value, c.currency, c.perUnit, transport));
+  });
+  addCostRow('Простой авто (опционально)', '', 'USD', false, '');
+}
+
+function addCostSeparatorRow(label) {
+  const tbody = document.getElementById('costBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td colspan="5" style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;padding:8px 4px 4px;border-bottom:1px solid var(--border);">' + label + '</td>';
+  tbody.appendChild(tr);
+}
+
+function addCostRow(name, value, currency, perUnit, transport) {
+  name = name||''; value = value||''; currency = currency||'USD'; perUnit = perUnit!==false;
+  const tbody = document.getElementById('costBody');
+  const tr = document.createElement('tr');
+  tr.dataset.transport = transport || '';
+  tr.innerHTML = '<td><input value="' + esc(name) + '" placeholder="Название"></td>' +
+    '<td><input type="number" value="' + value + '" class="costValue" placeholder="0" min="0"></td>' +
+    '<td><select class="currency"><option value="USD">USD</option><option value="EUR">EUR</option><option value="UAH">UAH</option></select></td>' +
+    '<td style="text-align:center;"><input type="checkbox" class="perUnit" title="На ед. контейнер" ' + (perUnit?'checked':'') + ' style="width:auto;cursor:pointer;accent-color:var(--accent);"></td>' +
+    '<td><button class="del-btn" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
+  tr.querySelector('.currency').value = currency;
+  tbody.appendChild(tr);
+}
+
+function getCosts() {
+  const costs = [];
+  document.querySelectorAll('#costBody tr').forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    if (!inputs[0]) return; // separator row
+    const nameVal = inputs[0]?.value;
+    if (!nameVal && tr.querySelectorAll('td').length === 1) return; // skip separator
+    costs.push({
+      name: nameVal || '',
+      value: parseFloat(tr.querySelector('.costValue')?.value) || 0,
+      currency: tr.querySelector('.currency')?.value || 'USD',
+      perUnit: tr.querySelector('.perUnit')?.checked || false,
+      transport: tr.dataset.transport || ''
+    });
+  });
+  return costs.filter(c => c.name || c.value);
+}
+
+// ============================================================
+// CURRENCY
+// ============================================================
+function toUSD(val, cur) { if (cur==='EUR') return val*1.19; if (cur==='UAH') return val/40; return val; }
+
+// ============================================================
+// STORAGE
+// ============================================================
+function calculateStorage() {
+  const L = LANGS[UI_LANG] || LANGS.ru;
+  const sv = document.getElementById('startDate').value;
+  const ev = document.getElementById('endDate').value;
+  if (!sv || !ev) { alert(L.selectBothDates); return; }
+  const days = Math.max(0, Math.ceil((new Date(ev)-new Date(sv))/864e5));
+  const rate = parseFloat(document.getElementById('storageRate').value) || 0;
+  window.storageTotal = days * rate;
+  window.storageCur = document.getElementById('storageCurrency').value;
+  const res = document.getElementById('storageResult');
+  res.style.display = 'block';
+  res.innerHTML = '<span style="color:var(--muted);">Дней:</span> <strong>' + days + '</strong> &nbsp;|&nbsp; <span style="color:var(--muted);">Сумма:</span> <strong style="color:var(--accent);">' + window.storageTotal.toFixed(2) + ' ' + window.storageCur + '</strong>';
+}
+function addStorageCost() {
+  const L = LANGS[UI_LANG] || LANGS.ru;
+  if (!window.storageTotal) { alert(L.calcStorageFirst); return; }
+  addCostRow('Хранение / Storage', window.storageTotal.toFixed(2), window.storageCur, false, '');
+}
+
+// ============================================================
+// CALCULATE — each route × its transport type
+// ============================================================
+function calculateTotal() {
+  const L = LANGS[UI_LANG] || LANGS.ru;
+  const routes = getRoutes();
+  const allCosts = getCosts();
+  const margin = parseFloat(document.getElementById('margin').value) || 0;
+  if (routes.length === 0) { alert(L.addRouteFirst); return; }
+
+  // Group costs by transport (empty transport = shared/global)
+  const costsByTransport = {};
+  allCosts.forEach(c => {
+    const key = c.transport || '__shared__';
+    if (!costsByTransport[key]) costsByTransport[key] = [];
+    costsByTransport[key].push(c);
+  });
+  const sharedCosts = costsByTransport['__shared__'] || [];
+
+  // Group routes by transport
+  const routesByTransport = {};
+  routes.forEach(r => {
+    if (!routesByTransport[r.transport]) routesByTransport[r.transport] = [];
+    routesByTransport[r.transport].push(r);
+  });
+
+  let grandTotal = 0;
+  const summaryRows = [];
+
+  Object.entries(routesByTransport).forEach(([transport, tRoutes]) => {
+    const tCosts = costsByTransport[transport] || [];
+    const combinedCosts = [...sharedCosts, ...tCosts];
+    const perUnitUSD = combinedCosts.filter(c=>c.perUnit).reduce((s,c)=>s+toUSD(c.value,c.currency),0);
+    const fixedUSD = combinedCosts.filter(c=>!c.perUnit).reduce((s,c)=>s+toUSD(c.value,c.currency),0);
+
+    tRoutes.forEach(r => {
+      const routeCost = perUnitUSD*r.qty + (tRoutes.length > 0 ? fixedUSD/tRoutes.length : fixedUSD);
+      const ratePerUnit = r.qty > 0 ? routeCost/r.qty : 0;
+      grandTotal += routeCost;
+      summaryRows.push({from:r.from||'—',to:r.to||'—',ctype:r.ctype,qty:r.qty,ratePerUnit,totalForRoute:routeCost,transport});
+    });
+  });
+  grandTotal += margin;
+
+  window.lastTotal = grandTotal;
+  window.lastSummaryRows = summaryRows;
+  window.lastExtraCosts = allCosts.filter(c=>!c.perUnit&&c.value>0);
+
+  // Render summary
+  const tbody = document.getElementById('summaryBody'); tbody.innerHTML = '';
+  const byTransport = {};
+  summaryRows.forEach(row => {
+    if (!byTransport[row.transport]) byTransport[row.transport] = [];
+    byTransport[row.transport].push(row);
+  });
+
+  Object.entries(byTransport).forEach(([transport, rows]) => {
+    // Section header row
+    if (Object.keys(byTransport).length > 1) {
+      const sep = document.createElement('tr'); sep.className = 'transport-section-row';
+      sep.innerHTML = '<td colspan="6">🚛 ' + transport + '</td>';
+      tbody.appendChild(sep);
+    }
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + row.from + ' &rarr; ' + row.to + '</td>' +
+        '<td><span class="badge badge-amber">' + row.ctype + '</span></td>' +
+        '<td style="text-align:center;"><span class="badge badge-blue">' + row.transport + '</span></td>' +
+        '<td style="text-align:center;">' + row.qty + '</td>' +
+        '<td style="text-align:right;">' + fmtN(row.ratePerUnit) + '</td>' +
+        '<td style="text-align:right;font-weight:600;">' + fmtN(row.totalForRoute) + '</td>';
+      tbody.appendChild(tr);
+    });
+  });
+
+  if (margin > 0) {
+    const tr = document.createElement('tr'); tr.className = 'subtotal-row';
+    tr.innerHTML = '<td colspan="5" style="text-align:right;">Маржа:</td><td style="text-align:right;">+ ' + fmtN(margin) + '</td>';
+    tbody.appendChild(tr);
+  }
+  const tr = document.createElement('tr'); tr.className = 'grand-row';
+  tr.innerHTML = '<td colspan="5" style="text-align:right;">ИТОГО:</td><td style="text-align:right;">' + fmtN(grandTotal) + '</td>';
+  tbody.appendChild(tr);
+
+  document.getElementById('summaryWrap').style.display = 'block';
+  document.getElementById('totalBox').style.display = 'block';
+  document.getElementById('totalValue').textContent = grandTotal.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' $';
+  document.getElementById('totalBreakdown').textContent = routes.length + ' маршрут(ов) | Маржа: ' + fmtN(margin);
+}
+
+function fmtN(n) { return (parseFloat(n)||0).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' $'; }
+function fmtNum(n) { return (parseFloat(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+// ============================================================
+// SAVE
+// ============================================================
+function saveRecord() {
+  const L = LANGS[UI_LANG] || LANGS.ru;
+  const records = JSON.parse(localStorage.getItem('fc_history') || '[]');
+  const routes = getRoutes();
+  const transports = [...new Set(routes.map(r=>r.transport))].join(', ');
+  records.unshift({
+    date: new Date().toLocaleDateString('ru-RU'),
+    client: document.getElementById('client').value,
+    booking: document.getElementById('booking').value,
+    line: document.getElementById('line').value,
+    port: document.getElementById('portLoad').value || '',
+    transport: transports,
+    total: window.lastTotal,
+    margin: parseFloat(document.getElementById('margin').value)||0,
+    costs: getCosts(), routes: getRoutes()
+  });
+  localStorage.setItem('fc_history', JSON.stringify(records.slice(0,100)));
+  const btn = event.target; const orig = btn.textContent;
+  btn.textContent = L.recordSaved; btn.style.background='var(--green)'; btn.style.color='#000';
+  setTimeout(() => { btn.textContent = orig; btn.style.background=''; btn.style.color=''; }, 1600);
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function renderHistory() {
+  const L = LANGS[UI_LANG] || LANGS.ru;
+  let records = JSON.parse(localStorage.getItem('fc_history') || '[]');
+  const search = document.getElementById('historySearch')?.value?.toLowerCase() || '';
+  const filterLine = document.getElementById('historyFilterLine')?.value || '';
+  const filterTransport = document.getElementById('historyFilterTransport')?.value || '';
+
+  // Populate line filter
+  const lineFilter = document.getElementById('historyFilterLine');
+  if (lineFilter && lineFilter.options.length <= 1) {
+    const lines = [...new Set(records.map(r=>r.line).filter(Boolean))];
+    lines.forEach(l => { const o = document.createElement('option'); o.value=l; o.textContent=l; lineFilter.appendChild(o); });
+  }
+
+  if (search) records = records.filter(r => (r.client||'').toLowerCase().includes(search) || (r.booking||'').toLowerCase().includes(search));
+  if (filterLine) records = records.filter(r => r.line === filterLine);
+  if (filterTransport) records = records.filter(r => (r.transport||'').includes(filterTransport));
+
+  const tbody = document.getElementById('historyBody'); tbody.innerHTML = '';
+  if (!records.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:24px;">' + L.historyEmpty + '</td></tr>';
+    return;
+  }
+  records.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    const allRecords = JSON.parse(localStorage.getItem('fc_history') || '[]');
+    const realIdx = allRecords.findIndex(rec => rec.date===r.date && rec.booking===r.booking && rec.total===r.total);
+    tr.innerHTML = '<td>' + r.date + '</td><td>' + (r.client||'—') + '</td>' +
+      '<td style="font-family:monospace;">' + (r.booking||'—') + '</td>' +
+      '<td><span class="badge badge-amber">' + (r.line||'—') + '</span></td>' +
+      '<td>' + (r.transport||'—') + '</td>' +
+      '<td style="font-weight:600;color:var(--accent);">' + ((r.total||0).toFixed(2)) + ' $</td>' +
+      '<td><button class="btn btn-secondary btn-sm" onclick="loadRecord(' + realIdx + ')">&#8617; Загрузить</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function loadRecord(i) {
+  const records = JSON.parse(localStorage.getItem('fc_history') || '[]');
+  const r = records[i]; if (!r) return;
+  document.getElementById('client').value = r.client||'';
+  document.getElementById('booking').value = r.booking||'';
+  document.getElementById('margin').value = r.margin||0;
+  if (r.port) document.getElementById('portLoad').value = r.port;
+  document.getElementById('costBody').innerHTML = '';
+  (r.costs||[]).forEach(c => addCostRow(c.name, c.value, c.currency, c.perUnit, c.transport||''));
+  document.getElementById('routes').innerHTML = ''; routeCounter = 0;
+  (r.routes||[]).forEach(rt => {
+    addRoute();
+    const cards = document.querySelectorAll('.route-card');
+    const card = cards[cards.length-1];
+    card.querySelector('.r-from').value = rt.from||'';
+    card.querySelector('.r-to').value = rt.to||'';
+    card.querySelector('.r-ctype').value = rt.ctype||'20DV';
+    card.querySelector('.r-qty').value = rt.qty||1;
+    if (rt.transport && card.querySelector('.r-transport')) card.querySelector('.r-transport').value = rt.transport;
+  });
+  document.querySelectorAll('.tab')[0].click();
+}
+
+function clearHistory() {
+  const L = LANGS[UI_LANG] || LANGS.ru;
+  if (confirm(L.clearConfirm)) { localStorage.removeItem('fc_history'); renderHistory(); }
+}
+
+// ============================================================
+// PDF EXPORT — multi-language
+// ============================================================
+function openPDFModal() {
+  if (!window.lastSummaryRows || window.lastSummaryRows.length === 0) {
+    alert(LANGS[UI_LANG].calcFirst); return;
+  }
+  document.getElementById('modalPDF').classList.add('open');
+}
+
+function exportClientPDF(pdfLang) {
+  closeModal('modalPDF');
+  const PL = PDF_LANGS[pdfLang] || PDF_LANGS.ru;
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210; const M=16;
+
+  // Header
+  doc.setFillColor(26,35,50);
+  doc.rect(0,0,W,30,'F');
+  doc.setFillColor(244,160,18);
+  doc.rect(0,30,W,2.5,'F');
+  doc.setTextColor(244,160,18);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.text(PL.title, M, 17);
+  doc.setTextColor(138,155,176);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.text(PL.sub, M, 25);
+  doc.setTextColor(160,170,185);
+  doc.setFontSize(8);
+  doc.text(new Date().toLocaleDateString('ru-RU',{day:'2-digit',month:'long',year:'numeric'}), W-M, 25, {align:'right'});
+
+  // Info block
+  let y = 38;
+  doc.setFillColor(240,244,250);
+  doc.rect(M,y,W-M*2,28,'F');
+  doc.setDrawColor(200,212,225);
+  doc.setLineWidth(0.3);
+  doc.rect(M,y,W-M*2,28,'S');
+  doc.line(W/2,y,W/2,y+28);
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(100,120,140);
+  doc.text(PL.clientLbl, M+4, y+6);
+  doc.text(PL.bookingLbl, W/2+4, y+6);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.setTextColor(26,35,50);
+  doc.text(document.getElementById('client').value||'—', M+4, y+14);
+  doc.text(document.getElementById('booking').value||'—', W/2+4, y+14);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(100,120,140);
+  doc.text(PL.lineLbl, M+4, y+21);
+  doc.text(PL.transportLbl, W/2+4, y+21);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(26,35,50);
+  doc.text(document.getElementById('line').value||'—', M+4, y+27);
+  const routes = getRoutes();
+  const transportsUsed = [...new Set(routes.map(r=>r.transport))].join(', ');
+  doc.text(transportsUsed||'—', W/2+4, y+27);
+  y += 34;
+
+  // Group summary rows by transport
+  const byTransport = {};
+  (window.lastSummaryRows||[]).forEach(r => {
+    if (!byTransport[r.transport]) byTransport[r.transport] = [];
+    byTransport[r.transport].push(r);
+  });
+
+  const transportKeys = Object.keys(byTransport);
+
+  if (transportKeys.length > 1) {
+    // Multi-transport: one section per transport
+    transportKeys.forEach(transport => {
+      // Section header
+      doc.setFillColor(36,49,71);
+      doc.rect(M,y,(W-M*2),8,'F');
+      doc.setTextColor(244,160,18);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(7.5);
+      doc.text(PL.transportSection + ': ' + transport.toUpperCase(), M+4, y+5.3);
+      y += 10;
+
+      const tableRows = byTransport[transport].map(r => [
+        r.from + ' \u2192 ' + r.to, r.ctype, String(r.qty),
+        fmtNum(r.ratePerUnit) + ' USD',
+        fmtNum(r.totalForRoute) + ' USD'
+      ]);
+
+      doc.autoTable({
+        startY: y, margin:{left:M,right:M},
+        head: [PL.tableHeaders],
+        body: tableRows,
+        theme:'grid',
+        styles:{fontSize:9,cellPadding:4,textColor:[26,35,50],lineColor:[210,220,230],lineWidth:0.25},
+        headStyles:{fillColor:[240,244,250],textColor:[80,100,120],fontSize:7,fontStyle:'bold',lineColor:[200,212,225],lineWidth:0.3},
+        columnStyles:{0:{cellWidth:68},1:{cellWidth:18,halign:'center'},2:{cellWidth:18,halign:'center'},3:{cellWidth:36,halign:'right'},4:{cellWidth:36,halign:'right',fontStyle:'bold'}},
+        alternateRowStyles:{fillColor:[248,251,255]}
+      });
+      y = doc.lastAutoTable.finalY + 4;
+    });
+  } else {
+    // Single transport
+    doc.setFillColor(36,49,71);
+    doc.rect(M,y,(W-M*2),8,'F');
+    doc.setTextColor(244,160,18);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7.5);
+    doc.text(PL.sectionTitle, M+4, y+5.3);
+    y += 10;
+
+    const tableRows = (window.lastSummaryRows||[]).map(r => [
+      r.from + ' \u2192 ' + r.to, r.ctype, String(r.qty),
+      fmtNum(r.ratePerUnit) + ' USD',
+      fmtNum(r.totalForRoute) + ' USD'
+    ]);
+
+    doc.autoTable({
+      startY: y, margin:{left:M,right:M},
+      head: [PL.tableHeaders],
+      body: tableRows,
+      theme:'grid',
+      styles:{fontSize:9,cellPadding:4,textColor:[26,35,50],lineColor:[210,220,230],lineWidth:0.25},
+      headStyles:{fillColor:[240,244,250],textColor:[80,100,120],fontSize:7,fontStyle:'bold',lineColor:[200,212,225],lineWidth:0.3},
+      columnStyles:{0:{cellWidth:68},1:{cellWidth:18,halign:'center'},2:{cellWidth:18,halign:'center'},3:{cellWidth:36,halign:'right'},4:{cellWidth:36,halign:'right',fontStyle:'bold'}},
+      alternateRowStyles:{fillColor:[248,251,255]}
+    });
+    y = doc.lastAutoTable.finalY + 2;
+  }
+
+  // Grand total bar
+  doc.setFillColor(26,35,50);
+  doc.rect(M,y,W-M*2,12,'F');
+  doc.setFillColor(244,160,18);
+  doc.rect(M,y,3,12,'F');
+  doc.setTextColor(200,210,225);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(9);
+  doc.text(PL.totalLabel, M+7, y+7.8);
+  doc.setTextColor(244,160,18);
+  doc.setFontSize(12);
+  doc.text(fmtNum(window.lastTotal)+' USD', W-M-3, y+7.8, {align:'right'});
+  y += 16;
+
+  // Extra costs block
+  const extra = window.lastExtraCosts || [];
+  if (extra.length > 0) {
+    const bH = 10 + extra.length*8 + 5;
+    doc.setFillColor(255,250,235);
+    doc.setDrawColor(244,160,18);
+    doc.setLineWidth(0.5);
+    doc.rect(M,y,W-M*2,bH,'FD');
+    doc.setFillColor(244,160,18);
+    doc.rect(M,y,3,bH,'F');
+    doc.setTextColor(160,100,0);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7);
+    doc.text(PL.extraLabel, M+7, y+6.5);
+    let ay = y+12;
+    extra.forEach(c => {
+      const usd = toUSD(c.value, c.currency);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(80,55,10);
+      doc.setFontSize(9);
+      doc.text(String(c.name), M+7, ay);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(130,80,0);
+      doc.text(fmtNum(usd)+' USD', W-M-3, ay, {align:'right'});
+      ay += 8;
+    });
+    y += bH + 6;
+  }
+
+  // Notes
+  y += 4;
+  doc.setDrawColor(210,220,230);
+  doc.setLineWidth(0.3);
+  doc.line(M,y,W-M,y);
+  y += 5;
+  doc.setFont('helvetica','italic');
+  doc.setFontSize(7);
+  doc.setTextColor(140,155,175);
+  doc.text(PL.note1, M, y);
+  if (PL.note2) { y+=4.5; doc.text(PL.note2, M, y); }
+
+  // Footer
+  doc.setFillColor(26,35,50);
+  doc.rect(0,285,W,12,'F');
+  doc.setFillColor(244,160,18);
+  doc.rect(0,285,W,1.5,'F');
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(138,155,176);
+  doc.text('Freight Calculator PRO  |  Cargo \xb7 Sea \xb7 Rail \xb7 Road', M, 292);
+  doc.text('1 / 1', W-M, 292, {align:'right'});
+
+  const fname = 'rate_'+(document.getElementById('booking').value||'offer')+'_'+new Date().toISOString().slice(0,10)+'.pdf';
+  doc.save(fname);
+}
+
+// ============================================================
+// EXCEL FULL
+// ============================================================
+function exportFullExcel() {
+  const costs=getCosts(); const routes=getRoutes();
+  const rows=[
+    ['FREIGHT CALCULATOR PRO'],[],
+    ['Клиент:',document.getElementById('client').value,'','Линия:',document.getElementById('line').value],
+    ['Букинг:',document.getElementById('booking').value,'','Порт:',document.getElementById('portLoad').value],
+    ['Дата:',new Date().toLocaleDateString('ru-RU')],[],
+    ['МАРШРУТЫ'],['Откуда','Куда','Тип контейнера','Кол-во','Транспорт']
+  ];
+  routes.forEach(r=>rows.push([r.from,r.to,r.ctype,r.qty,r.transport]));
+  rows.push([]);
+  rows.push(['РАСХОДЫ','Сумма','Валюта','Сумма USD','На ед.','Транспорт']);
+  costs.forEach(c=>rows.push([c.name,c.value,c.currency,parseFloat(toUSD(c.value,c.currency).toFixed(2)),c.perUnit?'Да':'Нет',c.transport||'']));
+  rows.push([]);
+  rows.push(['Маржа (USD)',parseFloat(document.getElementById('margin').value)||0]);
+  rows.push(['ИТОГО USD',parseFloat((window.lastTotal||0).toFixed(2))]);
+  try {
+    const wb=window.XLSX.utils.book_new();
+    const ws=window.XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:35},{wch:12},{wch:8},{wch:13},{wch:12},{wch:14}];
+    window.XLSX.utils.book_append_sheet(wb,ws,'Полный расчёт');
+    window.XLSX.writeFile(wb,'freight_full_'+Date.now()+'.xlsx');
+  } catch(e) { alert('Ошибка: '+e.message); }
+}
+</script>
+</body>
+</html>
